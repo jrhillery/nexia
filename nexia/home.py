@@ -62,17 +62,15 @@ class NexiaHome:
         Connects to and provides the ability to get and set parameters of your
         Nexia connected thermostat.
 
+        :param session: ClientSession to use
         :param house_id: int - Your house_id. You can get this from logging in
-        and looking at the url once you're looking at your climate device.
-        https://www.mynexia.com/houses/<house_id>/climate
+                and looking at the url once you're looking at your climate device.
+                https://www.mynexia.com/houses/<house_id>/climate
         :param username: str - Your login email address
         :param password: str - Your login password
-        :param auto_login: bool - Default is True, Login now (True), or login
-        manually later (False)
-        :param auto_update: bool - Default is True, Update now (True), or update
-        manually later (False)
-
-        JSON update. Default is 300s.
+        :param device_name: str - Name of the device running this code
+        :param brand: str - Brand of the desired system (from nexia.const)
+        :param state_file: str | PathLike - File to use when persisting data
         """
 
         self.username = username
@@ -147,7 +145,7 @@ class NexiaHome:
     async def post_url(self, request_url: str, payload: dict) -> aiohttp.ClientResponse:
         """
         Posts data to the session from the url and payload
-        :param url: str
+        :param request_url: str
         :param payload: dict
         :return: response
         """
@@ -186,7 +184,8 @@ class NexiaHome:
     ) -> aiohttp.ClientResponse:
         """
         Returns the full session.get from the URL (ROOT_URL + url)
-        :param url: str
+        :param request_url: str
+        :param headers: headers to include in the get request
         :return: response
         """
         if not headers:
@@ -448,7 +447,7 @@ class NexiaHome:
         return [thermostat.thermostat_id for thermostat in self.thermostats]
 
     def get_automation_by_id(self, automation_id) -> NexiaAutomation:
-        """Get a automation by its nexia id."""
+        """Get an automation by its nexia id."""
         for automation in self.automations:
             if automation.automation_id == automation_id:
                 return automation

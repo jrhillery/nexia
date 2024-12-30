@@ -485,6 +485,6 @@ def _extract_automations_from_houses_json(json_dict: dict) -> list[dict[str, Any
     )
 
 
-def _extract_items(json_dict: dict) -> list[dict[str, Any]]:
+def _extract_items(json_dict: Any) -> list[dict[str, Any]]:
     """Return the items key if it exists, otherwise the top level."""
     return json_dict.get("items", json_dict)

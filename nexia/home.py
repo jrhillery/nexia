@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
+import urllib.parse
 from typing import Any
 
 import aiohttp
@@ -92,6 +93,7 @@ class NexiaHome:
         self._uuid = None
         self.session = session
         self.loop = asyncio.get_running_loop()
+        self._root_url_splits = urllib.parse.urlsplit(self.root_url)
 
     @property
     def API_MOBILE_PHONE_URL(self) -> str:  # pylint: disable=invalid-name
@@ -130,6 +132,16 @@ class NexiaHome:
     def mobile_url(self) -> str:
         """The mobile url for the service."""
         return MOBILE_URL_TEMPLATE.format(self.root_url)
+
+    def resolve_url(self, raw_path: str) -> str:
+        """Determine the url of the specified raw path on the root host
+        :param raw_path: url path with possibly incorrect host
+        :return: url resolved on the root host
+        """
+        raw_path_splits = urllib.parse.urlsplit(raw_path)
+
+        return str(urllib.parse.urlunsplit(raw_path_splits._replace(
+            scheme=self._root_url_splits.scheme, netloc=self._root_url_splits.netloc)))
 
     def _api_key_headers(self) -> dict[str, str]:
         headers = {
@@ -179,11 +191,11 @@ class NexiaHome:
         response.raise_for_status()
         return response
 
-    async def _get_url(
+    async def get_url(
         self, request_url: str, headers: dict[str, str] | None = None
     ) -> aiohttp.ClientResponse:
         """
-        Returns the full session.get from the URL (ROOT_URL + url)
+        Returns the full session.get from the URL and headers
         :param request_url: str
         :param headers: headers to include in the get request
         :return: response
@@ -192,8 +204,9 @@ class NexiaHome:
             headers = {}
 
         headers.update(self._api_key_headers())
-        _LOGGER.debug("GET: Calling url %s", request_url)
-        response = await self.session.get(
+        _LOGGER.debug("GET: Calling url %s with headers: %s", request_url, headers)
+
+        response: aiohttp.ClientResponse = await self.session.get(
             request_url,
             allow_redirects=False,
             timeout=TIMEOUT,
@@ -212,7 +225,7 @@ class NexiaHome:
             )
             # assuming its redirecting to login
             await self.login()
-            return await self._get_url(request_url)
+            return await self.get_url(request_url)
 
         response.raise_for_status()
         return response
@@ -275,7 +288,7 @@ class NexiaHome:
         if self._last_update_etag:
             headers["If-None-Match"] = self._last_update_etag
 
-        response = await self._get_url(
+        response = await self.get_url(
             self.API_MOBILE_HOUSES_URL.format(house_id=self.house_id), headers=headers
         )
 
@@ -455,7 +468,7 @@ class NexiaHome:
 
     async def get_phone_ids(self) -> list[int]:
         """Get all the mobile phone ids."""
-        response = await self._get_url(self.API_MOBILE_PHONE_URL)
+        response = await self.get_url(self.API_MOBILE_PHONE_URL)
         data = await response.json()
         items = data["result"]["items"]
         phones = []

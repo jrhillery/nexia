@@ -913,7 +913,6 @@ async def test_new_xl824(aiohttp_session):
     assert zone.is_in_permanent_hold() is True
 
 
-
 async def test_system_offline(aiohttp_session):
     """Get a system offline."""
     nexia = NexiaHome(aiohttp_session)
@@ -965,7 +964,6 @@ async def test_system_offline(aiohttp_session):
     assert zone.is_in_permanent_hold() is True
 
 
-
 async def test_emergency_heat(aiohttp_session):
     """Test emergency heat."""
     nexia = NexiaHome(aiohttp_session)
@@ -1004,7 +1002,7 @@ async def test_emergency_heat(aiohttp_session):
     assert zone_ids == [84326108]
     zone = thermostat.get_zone_by_id(84326108)
 
-    assert zone.get_name() ==  'XL850 Home NativeZone'
+    assert zone.get_name() == 'XL850 Home NativeZone'
     assert zone.get_cooling_setpoint() == 99
     assert zone.get_heating_setpoint() == 68
     assert zone.get_current_mode() == "HEAT"

@@ -38,7 +38,7 @@ class NexiaThermostat:
         )
 
     @property
-    def API_MOBILE_THERMOSTAT_SELF_REF_URL(self):
+    def API_MOBILE_THERMOSTAT_SELF_REF_URL(self):  # pylint: disable=invalid-name
         return self._nexia_home.mobile_url + "/xxl_thermostats/{}"
 
     @property

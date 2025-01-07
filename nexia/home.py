@@ -154,8 +154,9 @@ class NexiaHome:
             headers["X-ApiKey"] = str(self.api_key)
         return headers
 
-    async def post_url(self, request_url: str, payload: dict,
-        log_response = False,
+    async def post_url(
+        self, request_url: str, payload: dict,
+        log_response=False,
     ) -> aiohttp.ClientResponse:
         """
         Posts data to the session from the url and payload
@@ -182,10 +183,10 @@ class NexiaHome:
 
         if log_response:
             _LOGGER.debug("POST: Response from url %s: status: %s:\n%s",
-                request_url, response.status, (await response.text()).strip())
+                          request_url, response.status, (await response.text()).strip())
         else:
             _LOGGER.debug("POST: Response from url %s: status: %s: %s",
-                request_url, response.status, response.content)
+                          request_url, response.status, response.content)
 
         if response.status == 302:
             # assuming its redirecting to login
@@ -202,7 +203,7 @@ class NexiaHome:
 
     async def get_url(
         self, request_url: str, headers: dict[str, str] | None = None,
-        log_response = False,
+        log_response=False,
     ) -> aiohttp.ClientResponse:
         """
         Returns the full session.get from the URL and headers
@@ -226,10 +227,10 @@ class NexiaHome:
         )
         if log_response:
             _LOGGER.debug("GET: Response from url %s: status: %s:\n%s",
-                request_url, response.status, (await response.text()).strip())
+                          request_url, response.status, (await response.text()).strip())
         else:
             _LOGGER.debug("GET: Response from url %s: status: %s: %s",
-                request_url, response.status, response.content)
+                          request_url, response.status, response.content)
 
         if response.status == 302:
             _LOGGER.debug(
@@ -336,13 +337,14 @@ class NexiaHome:
     def _update_devices(self):
         self.last_update = datetime.datetime.now()
         children = []
-        for child in self.devices_json:
-            type_ = child.get("type")
-            if not type_ or "thermostat" in type_:
-                children.append(child)
-            elif type_ == "group" and "_links" in child and "child" in child["_links"]:
-                for sub_child in child["_links"]["child"]:
-                    children.append(sub_child["data"])
+        if self.devices_json:
+            for child in self.devices_json:
+                type_ = child.get("type")
+                if not type_ or "thermostat" in type_:
+                    children.append(child)
+                elif type_ == "group" and "_links" in child and "child" in child["_links"]:
+                    for sub_child in child["_links"]["child"]:
+                        children.append(sub_child["data"])
 
         if self.thermostats is None:
             self.thermostats = []

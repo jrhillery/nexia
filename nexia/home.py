@@ -154,11 +154,14 @@ class NexiaHome:
             headers["X-ApiKey"] = str(self.api_key)
         return headers
 
-    async def post_url(self, request_url: str, payload: dict) -> aiohttp.ClientResponse:
+    async def post_url(self, request_url: str, payload: dict,
+        log_response = False,
+    ) -> aiohttp.ClientResponse:
         """
         Posts data to the session from the url and payload
         :param request_url: str
         :param payload: dict
+        :param log_response: bool indicating to include response text in logs
         :return: response
         """
         headers = self._api_key_headers()
@@ -177,7 +180,13 @@ class NexiaHome:
             max_redirects=MAX_REDIRECTS,
         )
 
-        _LOGGER.debug("POST: Response from url %s: %s", request_url, response.content)
+        if log_response:
+            _LOGGER.debug("POST: Response from url %s: status: %s:\n%s",
+                request_url, response.status, (await response.text()).strip())
+        else:
+            _LOGGER.debug("POST: Response from url %s: status: %s: %s",
+                request_url, response.status, response.content)
+
         if response.status == 302:
             # assuming its redirecting to login
             _LOGGER.debug(
@@ -192,12 +201,14 @@ class NexiaHome:
         return response
 
     async def get_url(
-        self, request_url: str, headers: dict[str, str] | None = None
+        self, request_url: str, headers: dict[str, str] | None = None,
+        log_response = False,
     ) -> aiohttp.ClientResponse:
         """
         Returns the full session.get from the URL and headers
         :param request_url: str
         :param headers: headers to include in the get request
+        :param log_response: bool indicating to include response text in logs
         :return: response
         """
         if not headers:
@@ -213,11 +224,12 @@ class NexiaHome:
             headers=headers,
             max_redirects=MAX_REDIRECTS,
         )
-        _LOGGER.debug(
-            "GET: RESPONSE %s: response.status %s",
-            request_url,
-            response.status,
-        )
+        if log_response:
+            _LOGGER.debug("GET: Response from url %s: status: %s:\n%s",
+                request_url, response.status, (await response.text()).strip())
+        else:
+            _LOGGER.debug("GET: Response from url %s: status: %s: %s",
+                request_url, response.status, response.content)
 
         if response.status == 302:
             _LOGGER.debug(
@@ -485,14 +497,14 @@ class NexiaHome:
 
 
 def _extract_devices_from_houses_json(json_dict: dict) -> list[dict[str, Any]]:
-    """Extras the payload from the houses json endpoint data."""
+    """Extracts the payload from the houses json endpoint data."""
     return _extract_items(
         json_dict["result"]["_links"]["child"][DEVICES_ELEMENT]["data"]
     )
 
 
 def _extract_automations_from_houses_json(json_dict: dict) -> list[dict[str, Any]]:
-    """Extras the payload from the houses json endpoint data."""
+    """Extracts the payload from the houses json endpoint data."""
     return _extract_items(
         json_dict["result"]["_links"]["child"][AUTOMATIONS_ELEMENT]["data"]
     )

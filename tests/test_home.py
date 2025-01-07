@@ -3,6 +3,8 @@
 import json
 import os
 from os.path import dirname
+from pathlib import Path
+
 from aioresponses import aioresponses
 import pytest
 import aiohttp
@@ -151,7 +153,7 @@ async def test_idle_thermo_issue_33758(mock_aioresponse: aioresponses):
 
 
 async def test_idle_thermo_issue_33968_thermostat_1690380(aiohttp_session):
-    """Get methods for an cooling thermostat."""
+    """Get methods for a cooling thermostat."""
     nexia = NexiaHome(aiohttp_session)
     devices_json = json.loads(await load_fixture("mobile_house_issue_33968.json"))
     nexia.update_from_json(devices_json)
@@ -854,12 +856,33 @@ async def test_new_xl1050(aiohttp_session):
     assert zone.get_heating_setpoint() == 55
     assert zone.get_current_mode() == "COOL"
     assert zone.get_requested_mode() == "COOL"
+    assert zone.get_temperature() == 72
     assert zone.get_presets() == ["None", "Home", "Away", "Sleep"]
     assert zone.get_preset() == "None"
     assert zone.get_status() == "Idle"
     assert zone.get_setpoint_status() == "Run Schedule - None"
     assert zone.is_calling() is False
+    assert zone.check_heat_cool_setpoints(70, 76) is None
     assert zone.is_in_permanent_hold() is False
+
+    # Sensors
+    thermostat = nexia.get_thermostat_by_id(2059676)
+
+    assert thermostat.get_zone_ids() == [83261015, 83261018, 84243806, 83535112]
+    zone = thermostat.get_zone_by_id(83261015)
+    sensors = zone.get_sensors()
+
+    assert len(sensors) == 1
+    sensor = sensors[0]
+    assert sensor.id == 16800389
+    assert sensor.name == "Living West"
+    assert sensor.type == "thermostat"
+    assert sensor.serial_number == "NativeIDTUniqueID"
+    assert sensor.weight == 1.0
+    assert sensor.temperature == 70
+    assert sensor.temperature_valid is True
+    assert sensor.humidity == 42
+    assert sensor.humidity_valid is True
 
 
 async def test_new_xl824(aiohttp_session):
@@ -1013,3 +1036,108 @@ async def test_emergency_heat(aiohttp_session):
     assert zone.get_setpoint_status() == "Run Schedule - None"
     assert zone.is_calling() is True
     assert zone.is_in_permanent_hold() is False
+
+
+async def test_sensor_access(mock_aioresponse: aioresponses):
+    """Test sensor access methods."""
+    async with aiohttp.ClientSession() as aiohttp_session:
+        state_file = Path("nexia_config_test.conf")
+        nexia = NexiaHome(aiohttp_session, house_id=2582941, state_file=state_file)
+        mock_aioresponse.post(
+            "https://www.mynexia.com/mobile/accounts/sign_in",
+            payload={
+                "success": True,
+                "error": None,
+                "result": {
+                    "mobile_id": 5400000,
+                    "api_key": "10654c0be00000000000000000000000",
+                    "setup_step": "done",
+                    "locale": "en_us"
+                }
+            },
+        )
+        await nexia.login()
+        mock_aioresponse.get(
+            "https://www.mynexia.com/mobile/houses/2582941",
+            body=await load_fixture("sensors_xl1050_house.json"),
+        )
+        assert await nexia.update() is not None
+
+        assert nexia.get_thermostat_ids() == [5378307]
+        thermostat: NexiaThermostat = nexia.get_thermostat_by_id(5378307)
+
+        assert thermostat.get_zone_ids() == [85034552]
+        zone = thermostat.get_zone_by_id(85034552)
+        sensors = zone.get_sensors()
+
+        assert len(sensors) == 2
+        sensor = sensors[0]
+        assert sensor.id == 17687546
+        assert sensor.name == "Center"
+        assert sensor.type == "thermostat"
+        assert sensor.serial_number == "NativeIDTUniqueID"
+        assert sensor.weight == 0.5
+        assert sensor.temperature == 68
+        assert sensor.temperature_valid is True
+        assert sensor.humidity == 32
+        assert sensor.humidity_valid is True
+
+        sensor = sensors[1]
+        assert sensor.id == 17687549
+        assert sensor.name == "Upstairs"
+        assert sensor.type == "930"
+        assert sensor.serial_number == "2410R5C53X"
+        assert sensor.weight == 0.5
+        assert sensor.temperature == 69
+        assert sensor.temperature_valid is True
+        assert sensor.humidity == 32
+        assert sensor.humidity_valid is True
+
+        mock_aioresponse.post(
+            "https://www.mynexia.com/mobile/xxl_zones/85034552/request_current_sensor_state",
+            payload={
+                "success": True,
+                "error": None,
+                "result": {
+                    "polling_path": "https://www.mynexia.com/backstage/announcements/6a31e745716789b84603036489fe8d1e35ca80fa5dd381e5"
+                }
+            },
+        )
+        mock_aioresponse.get(
+            "https://www.mynexia.com/backstage/announcements/6a31e745716789b84603036489fe8d1e35ca80fa5dd381e5",
+            body=b"null",
+        )
+        mock_aioresponse.get(
+            "https://www.mynexia.com/backstage/announcements/6a31e745716789b84603036489fe8d1e35ca80fa5dd381e5",
+            payload={
+                "status": "success, altered to enhance test coverage",
+                "options": {}
+            },
+        )
+        assert await zone.load_current_sensor_state(0.01) is True
+
+        mock_aioresponse.get(
+            "https://www.mynexia.com/mobile/xxl_thermostats/5378307",
+            body=await load_fixture("sensors_xl1050_thermostat.json"),
+        )
+        await thermostat.refresh_thermostat_data()
+        sensors = zone.get_sensors()
+
+        assert len(sensors) == 2
+        sensor = sensors[0]
+        assert sensor.id == 17687546
+        assert sensor.name == "Center"
+        assert sensor.weight == 0.5
+        assert sensor.temperature == 69
+        assert sensor.humidity == 33
+
+        sensor = sensors[1]
+        assert sensor.id == 17687549
+        assert sensor.name == "Upstairs"
+        assert sensor.weight == 0.5
+        assert sensor.temperature == 70
+        assert sensor.humidity == 33
+
+    assert state_file.exists() is True
+    state_file.unlink()
+    assert state_file.exists() is False

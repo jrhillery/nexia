@@ -1,10 +1,8 @@
 """Nexia Thermostat."""
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any
 
 from .const import AIR_CLEANER_MODES, BLOWER_OFF_STATUSES, HUMIDITY_MAX, HUMIDITY_MIN
 from .util import find_dict_with_keyvalue_in_json, find_humidity_setpoint, is_number
@@ -15,20 +13,6 @@ _LOGGER = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .home import NexiaHome
-
-
-class NexiaSensor(NamedTuple):
-    """Data object representing a nexia sensor details"""
-    id: int
-    name: str
-    type: str
-    serial_number: str
-    weight: float
-    temperature: int
-    temperature_valid: bool
-    humidity: int
-    humidity_valid: bool
-# end class NexiaSensor
 
 
 class NexiaThermostat:
@@ -52,6 +36,10 @@ class NexiaThermostat:
         return (
             self._nexia_home.mobile_url + "/xxl_thermostats/{thermostat_id}/{end_point}"
         )
+
+    @property
+    def API_MOBILE_THERMOSTAT_SELF_REF_URL(self):
+        return self._nexia_home.mobile_url + "/xxl_thermostats/{}"
 
     @property
     def is_online(self):
@@ -120,24 +108,6 @@ class NexiaThermostat:
         :return: str
         """
         return self._get_thermostat_key("name")
-
-    def get_sensors(self) -> list[NexiaSensor]:
-        """Get the sensor detail data objects from this instance
-        :return: list of sensor detail data objects
-        """
-        sensors_json = self._get_thermostat_features_key("room_iq_sensors")["sensors"]
-        sensors: list[NexiaSensor] = []
-
-        for sensor_json in sensors_json:
-            sensors.append(NexiaSensor(*[sensor_json[fld] for fld in NexiaSensor._fields]))
-
-        return sensors
-
-    def _get_sensor_actions(self) -> dict[str, dict[str, Any]]:
-        """Get the actions offered by our sensors
-        :return: dictionary of sensor actions
-        """
-        return self._get_thermostat_features_key("room_iq_sensors")["actions"]
 
     ########################################################################
     # Supported Features
@@ -578,47 +548,12 @@ class NexiaThermostat:
         """
         await self.set_humidity_setpoints(humidify_setpoint=humidify_setpoint)
 
-    async def load_current_sensor_state(self) -> bool:
-        """Load the current state of its sensors into the physical thermostat.
-        :return: bool indicating completed
-        """
-        actions = self._get_sensor_actions()
-        request_cur_state = self._nexia_home.resolve_url(
-            actions["request_current_state"]["href"])
-
-        async with await self._nexia_home.post_url(request_cur_state, {}) as response:
-            # The polling path in the response has the form:
-            #   https://www.mynexia.com/backstage/announcements/<48-hex-digits>
-            polling_url = self._nexia_home.resolve_url(
-                (await response.json())["result"]["polling_path"])
-        retries = 50
-
-        while retries:
-            await asyncio.sleep(0.7)
-            async with await self._nexia_home.get_url(polling_url) as response:
-                payload = (await response.read()).strip()
-
-            if payload != b"null":
-                status = json.loads(payload)["status"]
-
-                if status != "success":
-                    _LOGGER.error("Unexpected status [%s] loading current sensor state",
-                                  status)
-
-                return True
-            retries -= 1
-        # end while waiting for status
-
-        _LOGGER.error("Gave up waiting for current sensor state")
-        return False
-
     async def refresh_thermostat_data(self) -> None:
         """Refresh data in this thermostat instance.
         Note: Many other methods refresh this data before completing.
         :return: None
         """
-        self_ref = self._nexia_home.resolve_url(
-            self._get_thermostat_key("_links")["self"]["href"])
+        self_ref = self.API_MOBILE_THERMOSTAT_SELF_REF_URL.format(self.thermostat_id)
 
         async with await self._nexia_home.get_url(self_ref) as response:
             self.update_thermostat_json((await response.json())["result"])

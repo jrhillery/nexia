@@ -1042,8 +1042,8 @@ async def test_emergency_heat(aiohttp_session):
 async def test_sensor_access(mock_aioresponse: aioresponses):
     """Test sensor access methods."""
     async with aiohttp.ClientSession() as aiohttp_session:
-        state_file = Path("nexia_config_test.conf")
-        nexia = NexiaHome(aiohttp_session, house_id=2582941, state_file=state_file)
+        persist_file = Path("nexia_config_test.conf")
+        nexia = NexiaHome(aiohttp_session, house_id=2582941, state_file=persist_file)
         mock_aioresponse.post(
             "https://www.mynexia.com/mobile/accounts/sign_in",
             payload={
@@ -1097,7 +1097,7 @@ async def test_sensor_access(mock_aioresponse: aioresponses):
         assert sensor.humidity == 32
         assert sensor.humidity_valid is True
         assert sensor.has_battery is True
-        assert sensor.battery_level is 95
+        assert sensor.battery_level == 95
         assert sensor.battery_valid is True
 
         mock_aioresponse.post(
@@ -1145,6 +1145,6 @@ async def test_sensor_access(mock_aioresponse: aioresponses):
         assert sensor.temperature == 70
         assert sensor.humidity == 33
 
-    assert state_file.exists() is True
-    state_file.unlink()
-    assert state_file.exists() is False
+    assert persist_file.exists() is True
+    persist_file.unlink()
+    assert persist_file.exists() is False

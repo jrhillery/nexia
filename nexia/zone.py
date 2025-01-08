@@ -450,7 +450,7 @@ class NexiaThermostatZone:
             )
 
     async def load_current_sensor_state(self, polling_delay=0.7, max_polls=50) -> bool:
-        """Load the current state of its sensors into the physical thermostat.
+        """Load the current state of a zone's sensors into the physical thermostat.
         :param polling_delay: seconds to wait before each polling attempt
         :param max_polls: maximum number of times to poll for completion
         :return: bool indicating completed

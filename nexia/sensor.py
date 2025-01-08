@@ -1,6 +1,6 @@
 """Nexia Thermostat Sensor."""
 
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 
 class NexiaSensor(NamedTuple):
@@ -14,4 +14,8 @@ class NexiaSensor(NamedTuple):
     temperature_valid: bool
     humidity: int
     humidity_valid: bool
+    has_battery: bool
+    battery_level: Optional[int]
+    battery_valid: Optional[bool]
+
 # end class NexiaSensor

@@ -883,6 +883,7 @@ async def test_new_xl1050(aiohttp_session):
     assert sensor.temperature_valid is True
     assert sensor.humidity == 42
     assert sensor.humidity_valid is True
+    assert sensor.has_battery is False
 
 
 async def test_new_xl824(aiohttp_session):
@@ -1081,6 +1082,9 @@ async def test_sensor_access(mock_aioresponse: aioresponses):
         assert sensor.temperature_valid is True
         assert sensor.humidity == 32
         assert sensor.humidity_valid is True
+        assert sensor.has_battery is False
+        assert sensor.battery_level is None
+        assert sensor.battery_valid is None
 
         sensor = sensors[1]
         assert sensor.id == 17687549
@@ -1092,6 +1096,9 @@ async def test_sensor_access(mock_aioresponse: aioresponses):
         assert sensor.temperature_valid is True
         assert sensor.humidity == 32
         assert sensor.humidity_valid is True
+        assert sensor.has_battery is True
+        assert sensor.battery_level is 95
+        assert sensor.battery_valid is True
 
         mock_aioresponse.post(
             "https://www.mynexia.com/mobile/xxl_zones/85034552/request_current_sensor_state",

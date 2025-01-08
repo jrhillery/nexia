@@ -263,7 +263,8 @@ class NexiaThermostatZone:
             sensors_json = self._get_zone_features("room_iq_sensors")["sensors"]
 
             for sensor_json in sensors_json:
-                sensors.append(NexiaSensor(*[sensor_json[fld] for fld in NexiaSensor._fields]))
+                sensors.append(NexiaSensor(*[sensor_json.get(fld)
+                                             for fld in NexiaSensor._fields]))
 
         except KeyError:
             # our json has no sensors

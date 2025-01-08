@@ -94,6 +94,7 @@ class NexiaHome:
         self.session = session
         self.loop = asyncio.get_running_loop()
         self._root_url_splits = urllib.parse.urlsplit(self.root_url)
+        self.log_response = False
 
     @property
     def API_MOBILE_PHONE_URL(self) -> str:  # pylint: disable=invalid-name
@@ -154,15 +155,11 @@ class NexiaHome:
             headers["X-ApiKey"] = str(self.api_key)
         return headers
 
-    async def post_url(
-        self, request_url: str, payload: dict,
-        log_response=False,
-    ) -> aiohttp.ClientResponse:
+    async def post_url(self, request_url: str, payload: dict) -> aiohttp.ClientResponse:
         """
         Posts data to the session from the url and payload
         :param request_url: str
         :param payload: dict
-        :param log_response: bool indicating to include response text in logs
         :return: response
         """
         headers = self._api_key_headers()
@@ -181,7 +178,7 @@ class NexiaHome:
             max_redirects=MAX_REDIRECTS,
         )
 
-        if log_response:
+        if self.log_response:
             _LOGGER.debug("POST: Response from url %s: status: %s:\n%s",
                           request_url, response.status, (await response.text()).strip())
         else:
@@ -202,14 +199,12 @@ class NexiaHome:
         return response
 
     async def get_url(
-        self, request_url: str, headers: dict[str, str] | None = None,
-        log_response=False,
+        self, request_url: str, headers: dict[str, str] | None = None
     ) -> aiohttp.ClientResponse:
         """
         Returns the full session.get from the URL and headers
         :param request_url: str
         :param headers: headers to include in the get request
-        :param log_response: bool indicating to include response text in logs
         :return: response
         """
         if not headers:
@@ -225,7 +220,7 @@ class NexiaHome:
             headers=headers,
             max_redirects=MAX_REDIRECTS,
         )
-        if log_response:
+        if self.log_response:
             _LOGGER.debug("GET: Response from url %s: status: %s:\n%s",
                           request_url, response.status, (await response.text()).strip())
         else:

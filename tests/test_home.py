@@ -1415,6 +1415,12 @@ async def test_sensor_access(
     )
     assert await zone.load_current_sensor_state(max_polls=0) is False
 
+    assert nexia.any_room_iq_monitors() is False
+    zone.add_room_iq_monitor("upstairs")
+    zone.add_room_iq_monitor("center hall")
+    zone.remove_room_iq_monitor("upstairs")
+    assert nexia.any_room_iq_monitors() is True
+
     # execute normal code path
     mock_aioresponse.post(
         "https://www.mynexia.com/mobile/xxl_zones/85034552/request_current_sensor_state",
@@ -1437,7 +1443,11 @@ async def test_sensor_access(
             "options": {},
         },
     )
-    assert await zone.load_current_sensor_state(0.01) is True
+    mock_aioresponse.get(
+        "https://www.mynexia.com/mobile/houses/2582941",
+        body=await load_fixture("sensors_xl1050_house.json"),
+    )
+    assert await nexia.update() is not None
 
     mock_aioresponse.get(
         "https://www.mynexia.com/mobile/xxl_thermostats/5378307",

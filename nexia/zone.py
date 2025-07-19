@@ -117,6 +117,7 @@ class NexiaThermostatZone:
         self._zone_json = zone_json
         self.thermostat = nexia_thermostat
         self.zone_id: int = zone_json["id"]
+        self._room_iq_monitors: set[str] = set()
 
     @property
     def API_MOBILE_ZONE_URL(self) -> str:  # pylint: disable=invalid-name
@@ -668,6 +669,18 @@ class NexiaThermostatZone:
 
         _LOGGER.error("Gave up waiting while %s", target)
         return False
+
+    def add_room_iq_monitor(self, monitor_id: str) -> None:
+        """Add a RoomIQ sensor monitor to this zone's collection."""
+        self._room_iq_monitors.add(monitor_id)
+
+    def remove_room_iq_monitor(self, monitor_id: str) -> None:
+        """Remove a RoomIQ sensor monitor from this zone's collection."""
+        self._room_iq_monitors.discard(monitor_id)
+
+    def has_room_iq_monitor(self) -> bool:
+        """Return True when this zone has 1 or more RoomIQ sensor monitors."""
+        return bool(self._room_iq_monitors)
 
     def round_temp(self, temperature: float) -> float:
         """Rounds the temperature to the nearest 1/2 degree for C and nearest 1

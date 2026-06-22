@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v2.12.0 (2026-06-22)
+
+### Features
+
+- Ship PEP 561 py.typed marker ([#203](https://github.com/hvaclibs/nexia/pull/203),
+  [`c21a2b3`](https://github.com/hvaclibs/nexia/commit/c21a2b32e14ba5eabab9549fc02ce702c87f88cf))
+
+
 ## v2.11.5 (2026-06-22)
 
 ### Bug Fixes

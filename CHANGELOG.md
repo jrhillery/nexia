@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.11.4 (2026-06-22)
+
+### Bug Fixes
+
+- Release redirect response before 302 re-login retry
+  ([#204](https://github.com/hvaclibs/nexia/pull/204),
+  [`a7c1af4`](https://github.com/hvaclibs/nexia/commit/a7c1af40b07c23038e0f3b5edc73866d6491468e))
+
+
 ## v2.11.3 (2026-06-22)
 
 ### Bug Fixes

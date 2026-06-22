@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v2.11.5 (2026-06-22)
+
+### Bug Fixes
+
+- Validate heat/cool setpoints against both range bounds
+  ([#207](https://github.com/hvaclibs/nexia/pull/207),
+  [`0fff5ce`](https://github.com/hvaclibs/nexia/commit/0fff5cea8400d313bfcf9113e9db6ab74bd347b6))
+
+
 ## v2.11.4 (2026-06-22)
 
 ### Bug Fixes

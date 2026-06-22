@@ -1,6 +1,7 @@
 """Tests for Nexia Home."""
 
 import asyncio
+import gc
 import json
 import logging
 import os
@@ -2103,6 +2104,33 @@ async def test_resettable_single_shot() -> None:
     single_shot.reset_delayed_action_trigger()
     assert delayed_call.call_count == 1
     assert single_shot.action_pending() is False
+
+
+async def test_single_shot_keeps_strong_task_reference() -> None:
+    """SingleShot's delayed action still runs under garbage-collection pressure.
+
+    asyncio keeps only weak references to tasks, so an unreferenced
+    fire-and-forget task can be collected before it runs. SingleShot keeps a
+    strong reference to the spawned task until it completes, so the action runs
+    even when garbage collection is forced before the timer fires.
+    """
+    loop = asyncio.get_running_loop()
+    ran = asyncio.Event()
+
+    async def delayed_call() -> None:
+        ran.set()
+
+    single_shot = SingleShot(loop, 0.0, delayed_call)
+    single_shot.reset_delayed_action_trigger()
+
+    # Force collection while the timer is pending and the task is spawning, to
+    # prove the task is not collected out from under the event loop.
+    for _ in range(5):
+        gc.collect()
+        await asyncio.sleep(0)
+
+    await asyncio.wait_for(ran.wait(), timeout=1.0)
+    assert ran.is_set()
 
 
 @patch.object(NexiaThermostatZone, "select_room_iq_sensors")

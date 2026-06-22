@@ -4,7 +4,7 @@ requires = [ "poetry-core>=2" ]
 
 [project]
 name = "nexia"
-version = "2.11.2"
+version = "2.11.3"
 description = "Python library for connecting to nexia"
 readme = "README.md"
 keywords = [ "nexia" ]

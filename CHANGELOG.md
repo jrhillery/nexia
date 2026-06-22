@@ -2,6 +2,34 @@
 
 <!-- version list -->
 
+## v2.11.3 (2026-06-22)
+
+### Bug Fixes
+
+- Annotate setpoint-write path as float, not int
+  ([#206](https://github.com/hvaclibs/nexia/pull/206),
+  [`3e35338`](https://github.com/hvaclibs/nexia/commit/3e35338def76e514f7459300a5e8e6d9361640b0))
+
+- Annotate temperature getters as float, not int
+  ([#205](https://github.com/hvaclibs/nexia/pull/205),
+  [`989e1b4`](https://github.com/hvaclibs/nexia/commit/989e1b404bf31faae26a66e94de5e452e095734a))
+
+### Chores
+
+- Expand ruff ruleset toward aioesphomeapi ([#218](https://github.com/hvaclibs/nexia/pull/218),
+  [`f12d6e6`](https://github.com/hvaclibs/nexia/commit/f12d6e6fb05aee190242fae9e5a1051cdaa684d2))
+
+- **deps-ci**: Bump the github-actions group across 1 directory with 3 updates
+  ([#217](https://github.com/hvaclibs/nexia/pull/217),
+  [`35f0d67`](https://github.com/hvaclibs/nexia/commit/35f0d67c0f8cb9ec43f3a4f4da1f41c1391311c3))
+
+### Testing
+
+- Cover two UX360 thermostats with multiple zones each
+  ([#201](https://github.com/hvaclibs/nexia/pull/201),
+  [`5d10cc8`](https://github.com/hvaclibs/nexia/commit/5d10cc89f8e100c4b9f03604668f0b1cf146ecfa))
+
+
 ## v2.11.2 (2026-06-22)
 
 ### Bug Fixes

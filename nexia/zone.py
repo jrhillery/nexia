@@ -348,13 +348,23 @@ class NexiaThermostatZone:
             )
         if heat_temperature is not None and not heat_temperature <= max_temperature:
             raise AttributeError(
-                f"The heat setpoint ({heat_temperature} must be less than the "
+                f"The heat setpoint ({heat_temperature}) must be less than the "
                 f"maximum temperature of {max_temperature} degrees.",
+            )
+        if heat_temperature is not None and not heat_temperature >= min_temperature:
+            raise AttributeError(
+                f"The heat setpoint ({heat_temperature}) must be greater than "
+                f"the minimum temperature of {min_temperature} degrees.",
             )
         if cool_temperature is not None and not cool_temperature >= min_temperature:
             raise AttributeError(
                 f"The cool setpoint ({cool_temperature}) must be greater than "
                 f"the minimum temperature of {min_temperature} degrees.",
+            )
+        if cool_temperature is not None and not cool_temperature <= max_temperature:
+            raise AttributeError(
+                f"The cool setpoint ({cool_temperature}) must be less than the "
+                f"maximum temperature of {max_temperature} degrees.",
             )
         # The heat and cool setpoints appear to be valid.
 

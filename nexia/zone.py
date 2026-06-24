@@ -131,6 +131,7 @@ class NexiaThermostatZone:
         self._zone_json = zone_json
         self.thermostat = nexia_thermostat
         self.zone_id = make_zone_id(nexia_thermostat, zone_json)
+        self._room_iq_monitors: set[str] = set()
 
     @property
     def API_MOBILE_ZONE_URL(self) -> str:  # pylint: disable=invalid-name
@@ -727,6 +728,31 @@ class NexiaThermostatZone:
 
         _LOGGER.error("Gave up waiting while %s", target)
         return False
+
+    def add_room_iq_monitor(self, monitor_id: str) -> None:
+        """Register a subscriber for this zone's RoomIQ sensor state updates.
+
+        When at least one monitor is registered, each Nexia Home update will
+        also fetch the current RoomIQ sensor states for this zone, adding
+        5–40 seconds of latency and additional network traffic.
+
+        :param monitor_id: Identifier for the subscriber (unique in this zone).
+        """
+        self._room_iq_monitors.add(monitor_id)
+
+    def remove_room_iq_monitor(self, monitor_id: str) -> None:
+        """Unregister a subscriber for this zone's RoomIQ sensor state updates.
+
+        This tells the Nexia library the specified subscriber is no longer
+        interested in current states of this zone's RoomIQ sensors.
+
+        :param monitor_id: Same identifier that was supplied to add_room_iq_monitor.
+        """
+        self._room_iq_monitors.discard(monitor_id)
+
+    def has_room_iq_monitor(self) -> bool:
+        """Return True when this zone has any RoomIQ sensor monitors registered."""
+        return bool(self._room_iq_monitors)
 
     def round_temp(self, temperature: float) -> float:
         """Rounds the temperature to the nearest 1/2 degree for C and nearest 1

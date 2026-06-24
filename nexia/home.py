@@ -113,7 +113,7 @@ class NexiaHome:
         self.username = username
         self.password = password
         self.house_id = house_id
-        self.mobile_id = None
+        self.mobile_id: int | None = None
         self.brand = brand
         self.login_attempts_left = MAX_LOGIN_ATTEMPTS
         self._state_file = state_file or f"{brand}_config_{self.username}.conf"
@@ -402,6 +402,34 @@ class NexiaHome:
         await asyncio.sleep(UPDATE_DELAY_SECONDS)
         await self.update()
 
+    def any_room_iq_monitors(self) -> bool:
+        """Return True when any RoomIQ sensor monitors are registered."""
+        return bool(self.thermostats) and any(
+            any(zone.has_room_iq_monitor() for zone in therm.zones)
+            for therm in self.thermostats
+        )
+
+    async def _load_current_room_iq_states(self) -> None:
+        """Load the current state of all monitored zones' RoomIQ sensors in parallel."""
+        load_current_sensor_state_coroutines = (
+            zone.load_current_sensor_state()
+            for therm in self.thermostats
+            for zone in therm.zones
+            if zone.has_room_iq_monitor()
+        )
+        results = await asyncio.gather(
+            *load_current_sensor_state_coroutines, return_exceptions=True
+        )
+        for result in results:
+            if isinstance(result, Exception):
+                # stale data beats no data - just log this and continue
+                _LOGGER.exception(
+                    "Failed to load RoomIQ sensor state: Exception %s: %s",
+                    result.__class__.__name__,
+                    str(result),
+                    exc_info=result,
+                )
+
     async def update(self, force_update: bool = True) -> dict[str, Any] | None:
         """Updates the nexia status.
         :param force_update: Whether to force the update.
@@ -421,8 +449,11 @@ class NexiaHome:
         if not self.mobile_id:
             # not yet authenticated
             return None
+        if self.any_room_iq_monitors():
+            # load current data now so the server is not dealing with stale data
+            await self._load_current_room_iq_states()
 
-        headers = {}
+        headers: dict[str, str] = {}
         if self._last_update_etag:
             headers["If-None-Match"] = self._last_update_etag
 

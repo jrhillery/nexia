@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v2.13.0 (2026-06-24)
+
+### Chores
+
+- **pre-commit.ci**: Pre-commit autoupdate ([#221](https://github.com/hvaclibs/nexia/pull/221),
+  [`77b068d`](https://github.com/hvaclibs/nexia/commit/77b068d8868d3c8e0e260e3bf5d4b30b755ccf3f))
+
+### Features
+
+- Enable RoomIQ sensor monitor registry ([#228](https://github.com/hvaclibs/nexia/pull/228),
+  [`c8ab3c7`](https://github.com/hvaclibs/nexia/commit/c8ab3c7ad484c3712749b9a4142e670202ff1e50))
+
+
 ## v2.12.0 (2026-06-22)
 
 ### Features
